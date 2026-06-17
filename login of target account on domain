@@ -1,0 +1,8 @@
+DeviceLogonEvents 
+|join DeviceInfo on DeviceId
+| summarize Count=count() by OSPlatform, AccountDomain, ActionType
+|where ActionType == "LogonSuccess"
+|where AccountDomain in ("hillsrd")
+//| where LogonType != "Unknown"
+//| where LogonType != "Service"
+//|limit 100
