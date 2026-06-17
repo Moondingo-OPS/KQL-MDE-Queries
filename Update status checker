@@ -1,0 +1,20 @@
+let WhichMonth = "August 2025 Security Updates";
+let WhichOrg = "Insert Org Name";
+let MissingUpdate = DeviceTvmSoftwareVulnerabilities 
+| where OSPlatform in ("Windows10", "Windows7", "Windows8Blue") 
+//| "Windows11"
+| where RecommendedSecurityUpdate in (WhichMonth) 
+| distinct DeviceName, RecommendedSecurityUpdate; 
+DeviceInfo 
+| where MachineGroup in (WhichOrg) 
+| where OSPlatform in ("Windows10", "Windows7", "Windows8Blue") 
+| where ClientVersion != "1.0" 
+| summarize arg_max(Timestamp, *) by DeviceName 
+| project Timestamp, MachineGroup, DeviceId, DeviceName, ClientVersion, OSArchitecture, OSPlatform, OSBuild, OSVersion, OSVersionInfo, PublicIP, JoinType, LoggedOnUsers 
+| join kind=leftouter ( 
+    MissingUpdate 
+) on DeviceName 
+| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows10" and OSVersionInfo in ("1511","1607","1703","1709","1803","1809","1903","1909","20H2","21H1","21H2")) or (OSPlatform == "Windows11" and OSVersionInfo in ("21H2")), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
+//| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows10" and OSVersionInfo in ("1511","1607","1703","1709","1803","1809","1903","1909","20H2","21H1","21H2")), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
+| summarize Devices=count() by PatchCompliance 
+| render piechart
