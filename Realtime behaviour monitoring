@@ -1,0 +1,13 @@
+let DataTable = DeviceTvmSecureConfigurationAssessmentKB 
+| project ConfigurationId,ConfigurationName; DeviceInfo 
+| where Timestamp >= ago(7d) 
+| where OnboardingStatus =~ 'Onboarded' 
+| where isnotnull(OSBuild) 
+| distinct DeviceId,MachineGroup 
+| join DeviceTvmSecureConfigurationAssessment on DeviceId 
+| where IsApplicable == 1 
+| where ConfigurationId == "scid-91"
+| lookup DataTable on ConfigurationId 
+| extend querydate=datetime(now) 
+| extend TableType="MDAVConfiguration"  
+| project TableType,MachineGroup,DeviceName,DeviceId,ConfigurationId,ConfigurationName,IsCompliant
