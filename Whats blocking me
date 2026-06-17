@@ -1,0 +1,5 @@
+DeviceEvents 
+| where ActionType startswith "AppControlExecutableAudited" 
+| where Timestamp > ago(1d)
+| order by Timestamp desc  
+|where DeviceName startswith "#########"
