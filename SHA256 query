@@ -1,4 +1,4 @@
-// Hunt to detect known IOC specified in NHS Digitals Cyber Alerts
+// Hunt to detect known IOC
 find in (DeviceProcessEvents, DeviceFileEvents, DeviceEvents, DeviceImageLoadEvents)
 where (SHA256 has_any ("078163d5c16f64caa5a14784323fd51451b8c831c73396b967b4e35e6879937b"))
 // Recipe | Recipe Lister
