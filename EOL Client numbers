@@ -1,0 +1,30 @@
+// Counts clients by OS Build and displays end of life details
+// Date format = mm/dd/yyyy
+let BuildInfo=datatable(OSBuild:long, Version:string, EolDate:datetime)[
+    7601,"",datetime(2020-01-14),
+    9600,"",datetime(2016-01-12),
+    14393,"1607 LTSC",datetime(2026-10-13),
+    15063,"1703",datetime(2019-10-08),
+    16299,"1709",datetime(2020-10-13),
+    17134,"1803",datetime(2021-05-11),
+    17763,"1809",datetime(2021-05-11),
+    18362,"1903",datetime(2020-08-12),
+    18363,"1909",datetime(2022-10-05),
+    19041,"2004",datetime(2021-12-14),
+    19042,"20H2",datetime(2023-05-09),
+    19043,"21H1",datetime(2022-12-13),
+    19044,"21H2",datetime(2024-06-11),
+    19045,"22H2",datetime(2025-01-13),
+    22000,"21H2",datetime(2024-10-08),
+    22621,"22H2",datetime(2025-10-14)
+    ];
+DeviceInfo
+| where isnotempty(OSPlatform) and MachineGroup == "Shropshire Community Health"
+| distinct DeviceName, OSPlatform, OSArchitecture, OSVersion, OSBuild, MachineGroup
+| summarize TotalDevices=count() by OSPlatform, OSArchitecture, OSVersion, OSBuild, MachineGroup
+| lookup kind=leftouter BuildInfo on OSBuild
+| extend SupportStatus = case(
+    EolDate >= now(), ("Supported"),
+    "End of Life") 
+| project OperatingSystem=strcat_delim(" ", OSPlatform, Version, OSArchitecture), TotalDevices, SupportStatus, EolDate
+| sort by OperatingSystem asc 
