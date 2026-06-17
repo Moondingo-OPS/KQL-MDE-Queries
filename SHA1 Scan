@@ -1,0 +1,3 @@
+find in (DeviceProcessEvents, DeviceFileEvents, DeviceEvents)
+    where (SHA1 == "")    
+| sort by DeviceName, Timestamp desc
