@@ -1,0 +1,25 @@
+// Get list of onboarded server devices by MachineGroup and OS
+let DeviceCounts = DeviceInfo
+//PLEASE ENTER YOUR MACHINE GROUP BELOW
+| where MachineGroup startswith ""
+| where isnotnull (OSBuild) and OnboardingStatus == "Onboarded"
+// | where OSPlatform in ("WindowsServer2012R2","WindowsServer2016")
+| summarize arg_max(Timestamp, *) by DeviceId;
+// Get UA devices
+let UA_devices = DeviceTvmSoftwareInventory
+| where SoftwareName == "defender_for_endpoint"
+| where OSPlatform in ("WindowsServer2012R2", "WindowsServer2016") // Using Client version is really targeted at these OS versions
+| where parse_version(SoftwareVersion) between(parse_version("10.8040") .. parse_version("10.8750.99999.9999")) // Only include versions between shown
+| extend AgentVersion = "UA"
+| project DeviceId, SoftwareName, SoftwareVersion, AgentVersion;
+// Get MMA devices
+let MMA_devices = DeviceProcessEvents
+| where InitiatingProcessFileName =~ "MonitoringHost.exe"
+| where InitiatingProcessFolderPath has @"Microsoft Monitoring Agent"
+| summarize arg_max(Timestamp, *) by DeviceId, InitiatingProcessFileName
+| project DeviceId, SoftwareName="monitoring_agent", AgentVersion="MMA";
+// Append and format
+UA_devices
+| union MMA_devices
+| join DeviceCounts on DeviceId
+|distinct DeviceId,DeviceName, AgentVersion, OSDistribution, MachineGroup,RegistryDeviceTag
