@@ -1,0 +1,7 @@
+DeviceInfo
+| where OSPlatform contains "Windows11"
+| where MachineGroup in (" Group Name ")
+| distinct DeviceName, OSPlatform, OSArchitecture, OSVersion, OSBuild, MachineGroup,OSVersionInfo
+| project Build=strcat(OSPlatform," (",OSVersionInfo,")"),OSArchitecture, OSVersion, OSBuild, MachineGroup
+| summarize Count=count() by Build,MachineGroup
+| sort  by Build asc    
