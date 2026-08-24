@@ -1,0 +1,13 @@
+// Query Defender/Sentinel for Support Status and July Update
+DeviceInfo
+| summarize arg_max(Timestamp, *) by DeviceId // Get the latest snapshot per machine
+| extend OSBuild = toint(OSBuild)
+| extend SupportStatus = iif(OSBuild >= 26200, "In Support", "Out of Support")
+| join kind=leftouter (
+    DeviceTvmSoftwareVulnerabilitiesKB
+    // Filters updates released or evaluated during July 
+    | where PublishedDate between (datetime(2026-07-01) .. datetime(2026-07-31))
+    | summarize HasJulyPatch = count() by DeviceId
+) on DeviceId
+| extend JulyUpdateStatus = iif(HasJulyPatch > 0, "Installed", "Missing")
+| project DeviceName, OSVersion, OSBuild, SupportStatus, JulyUpdateStatus
