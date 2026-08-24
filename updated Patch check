@@ -14,7 +14,7 @@ DeviceInfo
 | join kind=leftouter ( 
     MissingUpdate 
 ) on DeviceName 
-| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows11"and OSVersionInfo in ("21H2","22H2","23H2")), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
+| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows11"and OSVersionInfo in ("21H2","22H2","23H2","24H2")), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
 //| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows10"), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
 | summarize Devices=count() by PatchCompliance 
 | render piechart 
