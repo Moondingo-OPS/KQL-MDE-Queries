@@ -1,13 +1,20 @@
-// Query Defender/Sentinel for Support Status and July Update
-DeviceInfo
-| summarize arg_max(Timestamp, *) by DeviceId // Get the latest snapshot per machine
-| extend OSBuild = toint(OSBuild)
-| extend SupportStatus = iif(OSBuild >= 26200, "In Support", "Out of Support")
-| join kind=leftouter (
-    DeviceTvmSoftwareVulnerabilitiesKB
-    // Filters updates released or evaluated during July 
-    | where PublishedDate between (datetime(2026-07-01) .. datetime(2026-07-31))
-    | summarize HasJulyPatch = count() by DeviceId
-) on DeviceId
-| extend JulyUpdateStatus = iif(HasJulyPatch > 0, "Installed", "Missing")
-| project DeviceName, OSVersion, OSBuild, SupportStatus, JulyUpdateStatus
+let WhichMonth = "July 2026 Security Updates";
+let WhichOrg = "TBC";
+let MissingUpdate = DeviceTvmSoftwareVulnerabilities 
+| where OSPlatform in ("Windows11") 
+//| "Windows11"
+| where RecommendedSecurityUpdate in (WhichMonth) 
+| distinct DeviceName, RecommendedSecurityUpdate; 
+DeviceInfo 
+| where MachineGroup in (WhichOrg) 
+| where OSPlatform in ("Windows11") 
+| where ClientVersion != "1.0" 
+| summarize arg_max(Timestamp, *) by DeviceName 
+| project Timestamp, MachineGroup, DeviceId, DeviceName, ClientVersion, OSArchitecture, OSPlatform, OSBuild, OSVersion, OSVersionInfo, PublicIP, JoinType, LoggedOnUsers 
+| join kind=leftouter ( 
+    MissingUpdate 
+) on DeviceName 
+| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows11"and OSVersionInfo in ("21H2","22H2","23H2")), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
+//| extend PatchCompliance = iif(OSVersionInfo in ("6.1","6.3") or (OSPlatform == "Windows10"), "End of Support", iif(RecommendedSecurityUpdate in (WhichMonth), "Non-compliant", "Compliant") )
+| summarize Devices=count() by PatchCompliance 
+| render piechart 
